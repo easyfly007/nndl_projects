@@ -168,7 +168,7 @@ def conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ks
 DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
 """
 tests.test_con_pool(conv2d_maxpool)
-exit()
+
 
 def flatten(x_tensor):
     """
@@ -177,7 +177,9 @@ def flatten(x_tensor):
     : return: A tensor of size (Batch Size, Flattened Image Size).
     """
     # TODO: Implement Function
-    return None
+    x_shape = x_tensor.get_shape().as_list()
+    return tf.contrib.layers.flatten(x_tensor, [None, x_shape[1]*x_shape[2]*x_shape[3]])
+    return tf.reshape(x_tensor, [-1, x_shape[1]*x_shape[2]*x_shape[3]])
 
 
 """
@@ -194,6 +196,11 @@ def fully_conn(x_tensor, num_outputs):
     : return: A 2-D tensor where the second dimension is num_outputs.
     """
     # TODO: Implement Function
+    w_shape = [x_tensor.get_shape().as_list()[1], num_outputs]
+    w = tf.Variable(tf.random_normal(w_shape))
+    b = tf.Variable(tf.random_normal([num_outputs]))
+    y = tf.matmul(x_tensor, w)
+    return  tf.nn.bias_add(y, b)
     return None
 
 
@@ -211,7 +218,11 @@ def output(x_tensor, num_outputs):
     : return: A 2-D tensor where the second dimension is num_outputs.
     """
     # TODO: Implement Function
-    return None
+    w_shape = [x_tensor.get_shape().as_list()[1], num_outputs]
+    w = tf.Variable(tf.random_normal(w_shape))
+    b = tf.Variable(tf.random_normal([num_outputs]))
+    y = tf.matmul(x_tensor, w)
+    return  tf.nn.bias_add(y, b)
 
 
 """
@@ -231,19 +242,26 @@ def conv_net(x, keep_prob):
     #    Play around with different number of outputs, kernel size and stride
     # Function Definition from Above:
     #    conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ksize, pool_strides)
-    
+    conv1 = conv2d_maxpool(x, 100, (5, 5), (2,2), (2,2), (2,2))
+    conv2 = conv2d_maxpool(conv1, 50, (5, 5), (2,2), (2,2), (2,2))
+    conv3 = conv2d_maxpool(conv2, 20, (5, 5), (2,2), (2,2), (2,2))
+
+    flatten_layer = flatten(conv3)
+    print(flatten_layer.get_shape().as_list())
 
     # TODO: Apply a Flatten Layer
     # Function Definition from Above:
     #   flatten(x_tensor)
     
+    full1 = fully_conn(flatten_layer, 100)
+    full2 = fully_conn(full1, 100)
 
     # TODO: Apply 1, 2, or 3 Fully Connected Layers
     #    Play around with different number of outputs
     # Function Definition from Above:
     #   fully_conn(x_tensor, num_outputs)
     
-    
+    outlayer = output(full2, 10)
     # TODO: Apply an Output Layer
     #    Set this to the number of classes
     # Function Definition from Above:
@@ -251,7 +269,7 @@ def conv_net(x, keep_prob):
     
     
     # TODO: return output
-    return None
+    return outlayer
 
 
 """
@@ -285,7 +303,7 @@ correct_pred = tf.equal(tf.argmax(logits, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32), name='accuracy')
 
 tests.test_conv_net(conv_net)
-
+exit()
 
 def train_neural_network(session, optimizer, keep_probability, feature_batch, label_batch):
     """
