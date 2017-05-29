@@ -88,8 +88,8 @@ tests.test_one_hot_encode(one_hot_encode)
 """
 DON'T MODIFY ANYTHING IN THIS CELL
 """
-# Preprocess Training, Validation, and Testing Data
-# helper.preprocess_and_save_data(cifar10_dataset_folder_path, normalize, one_hot_encode)
+Preprocess Training, Validation, and Testing Data
+helper.preprocess_and_save_data(cifar10_dataset_folder_path, normalize, one_hot_encode)
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
