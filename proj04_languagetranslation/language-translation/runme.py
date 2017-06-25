@@ -26,5 +26,26 @@ print('french sentences {} to {}'.format(*view_sentence_range))
 print('\n'.join(target_text.split('\n')[view_sentence_range[0]:view_sentence_range[1]]))
 
 def text_to_ids(source_text, target_text, source_vocab_to_int, target_vocab_to_int):
-	# soure_id 
-	return None, None
+	source_text_ids = []
+	target_text_ids = []
+	sentences = source_text.split('\n')
+	for sentence in sentences:
+		words = sentence.split()
+		sentence_id = []
+		for word in words:
+			word_int = source_vocab_to_int[word]
+			sentence_id.append(word_int)
+		source_text_ids.append(sentence_id)
+
+	sentences = target_text.split('\n')
+	for sentence in sentences:
+		words = sentence.split()
+		sentence_id = []
+		for word in words:
+			word_int = target_vocab_to_int[word]
+			sentence_id.append(word_int)
+		sentence_id.append(target_vocab_to_int['<EOS>'])
+		target_text_ids.append(sentence_id)
+	return source_text_ids, target_text_ids
+
+tests.test_text_to_ids(text_to_ids)
