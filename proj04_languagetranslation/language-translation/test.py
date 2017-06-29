@@ -131,4 +131,55 @@ class Seq2SeqModel(object):
 		if len(decoder_inputs) != decoder_size:
 			raise ValueError('decoder length must be equal to the one in bucket,'
 				'%d != %d.' %(len(decoder_inputs), decoder_size))
-			
+		if len(target_weights) != decoder_size:
+			raise ValueError('weights length must be equal to the one in bucket,'
+				'%d != %d. ' %(len(target_weights), decoder_size))
+
+		input_feed = {}
+		for l in xrange(encoder_size):
+			input_feed[self.encoder_inputs[l].name] = encoder_inputs[l]
+		for l in xrange(decoder_size):
+			input_feed[self.decoder_inputs[l].name] = decoder_inputs[i]
+			input_feed[self.target_weights[l].name] = target_weights[l]
+
+		last_target = self.decoder_inputs[decoder_size].name
+		input_feed[last_target] = np.zeros([self.batch_size], dtype = np.int32)
+
+		if not forward_only:
+			output_feed = [self.updates[bucket_id],
+				self.gradient_norms[bucket_id],
+				self.losses[bucket_id]]
+		else:
+			output_feed = [self.losses[bucket_id]]
+			for l in xrange(decoder_size):
+				output_feed.append(self.outputs[bucket_id][l])
+
+		outputs = session.run(output_feed, input_feed)
+		if not forward_only:
+			return outputs[1], outputs[2], None
+		else:
+			return None, outputs[0], outputs[1:]
+
+	def get_batch(self, data, bucket_id):
+		encoder_size, decoder_size = self.buckets[bucket_id]
+		for _ in xrange(self.batch_size):
+			encoder_input, decoder_input = rnadom.choice(data[bucket_id])
+			encoder_pad = [data_utils.PAD_ID] * (encoder_size - len(encoder_input))
+			encoder_inputs.append(list(reversed(encoder_input + encoder_pad)))
+
+			decoder_pad_size = decoder_size - len(decoder_input) - 1
+			decoder_inputs.append([data_utils.GO_ID] + decoder_input + [data_utils.PAD_ID] * decoder_pad_size)
+		batch_encoderr_inputs, batch_decoder_inputs, batch_weights = [], [], []
+
+		for length_idx in xrange(encoder_size):
+			batch_encoder_inputs.append(
+				np.array([encoder_inputs[batch_idx] for batch_idx in range(self.batch_size)], dtype = np.int32))
+			batch_weight = np.ones(self.batch_size, dtype = np.float32)
+			for batch_idx in range(self.batch_size):
+				if length_idx < decoder_size -1:
+					target = decoder_inputs[batch_idx][length_idx +1]
+				if length_idx == decoder_size -1 or target == data_utils.PAD_ID:
+					batch_weight[batch_idx] = 0.0
+			batch_weights.append(batch_weight)
+		return batch_encoder_inputs, batch_decoder_inputs, batch_weights
+		
